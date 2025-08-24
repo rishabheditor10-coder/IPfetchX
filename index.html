@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quantum UI IPfetchX - Futuristic IP Info Tool</title>
+    <title>IPfetchX - IP Analysis Tool</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -27,7 +27,7 @@
 
         .quantum-container {
             width: 100%;
-            max-width: 900px;
+            max-width: 1100px;
             margin: 0 auto;
         }
 
@@ -129,6 +129,9 @@
             cursor: pointer;
             transition: all 0.3s ease;
             box-shadow: 0 0 15px rgba(0, 247, 255, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .quantum-button:hover {
@@ -160,7 +163,7 @@
 
         .info-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 20px;
             margin-bottom: 25px;
         }
@@ -183,6 +186,9 @@
             font-size: 0.9rem;
             color: #a0a0ff;
             margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .info-value {
@@ -190,6 +196,16 @@
             font-weight: 600;
             color: #00f7ff;
             word-break: break-word;
+        }
+
+        .status-success {
+            color: #00ff95;
+            font-weight: 700;
+        }
+
+        .status-fail {
+            color: #ff7070;
+            font-weight: 700;
         }
 
         /* Loading animation */
@@ -227,6 +243,27 @@
             text-align: center;
             color: #ff7070;
             backdrop-filter: blur(5px);
+        }
+
+        /* Toggle section */
+        .toggle-section {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .toggle-button {
+            padding: 10px 20px;
+            background: rgba(5, 10, 25, 0.8);
+            border: 1px solid rgba(66, 220, 255, 0.4);
+            border-radius: 8px;
+            color: #a0a0ff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-button:hover {
+            border-color: #00f7ff;
+            color: #00f7ff;
         }
 
         /* Footer */
@@ -317,6 +354,10 @@
             .info-grid {
                 grid-template-columns: 1fr;
             }
+            
+            .quantum-button {
+                justify-content: center;
+            }
         }
     </style>
 </head>
@@ -329,16 +370,21 @@
     
     <div class="quantum-container">
         <header class="quantum-header">
-            <h1 class="quantum-title">️️IPfetchX - By<br>R.I.S.H.A.B.H </h1>
-            <p class="quantum-subtitle">IP Intelligence with Quantum Interface</p>
-            <p class="author-text">IPfetchX Tool<br>Hacker Vibes Activated</p>
+            <h1 class="quantum-title"> IPfetchX ~ BY<br>R.I.S.H.A.B.H </h1>
+            <p class="quantum-subtitle">IP Intelligence with Quantum UI</p>
+            <p class="author-text">IPfetch Tool<br>Hacker Vibes Activated</p>
         </header>
         
         <section class="input-section">
             <div class="input-container">
                 <input type="text" class="quantum-input" id="ip-input" placeholder="Enter IP Address">
-                <button class="quantum-button" id="fetch-btn">Analyze IP</button>
+                <button class="quantum-button" id="fetch-btn">
+                    <i class="fas fa-satellite"></i> Analyze IP
+                </button>
             </div>
+            <p style="text-align: center; margin-top: 15px; color: #a0a0ff;">
+                <i class="fas fa-lightbulb"></i> Leave empty to detect your current IP
+            </p>
         </section>
         
         <div class="quantum-loader" id="loader">
@@ -354,6 +400,12 @@
         <section class="results-section" id="results-section">
             <h2 class="results-title">IP Intelligence Report</h2>
             
+            <div class="toggle-section">
+                <button class="toggle-button" id="toggle-view">
+                    <i class="fas fa-exchange-alt"></i> Toggle Compact View
+                </button>
+            </div>
+            
             <div class="info-grid" id="info-grid">
                 <!-- Info cards will be generated here -->
             </div>
@@ -364,7 +416,7 @@
         </section>
         
         <footer class="quantum-footer">
-            <p>| © 2025 Made with ❤️ and code | </p>
+            <p>| © 2025 Made with ❤️ and Code |</p>
         </footer>
     </div>
 
@@ -380,6 +432,9 @@
             const errorMessage = document.getElementById('error-message');
             const infoGrid = document.getElementById('info-grid');
             const extraInfo = document.getElementById('extra-info');
+            const toggleView = document.getElementById('toggle-view');
+            
+            let isCompactView = false;
             
             // Fetch IP info when button is clicked
             fetchBtn.addEventListener('click', fetchIPInfo);
@@ -391,11 +446,67 @@
                 }
             });
             
-            function fetchIPInfo() {
-                const ip = ipInput.value.trim();
+            // Toggle view mode
+            toggleView.addEventListener('click', function() {
+                isCompactView = !isCompactView;
+                const cards = document.querySelectorAll('.info-card');
                 
+                if (isCompactView) {
+                    cards.forEach(card => {
+                        if (!card.classList.contains('important-field')) {
+                            card.style.display = 'none';
+                        }
+                    });
+                    toggleView.innerHTML = '<i class="fas fa-exchange-alt"></i> Toggle Full View';
+                } else {
+                    cards.forEach(card => {
+                        card.style.display = 'block';
+                    });
+                    toggleView.innerHTML = '<i class="fas fa-exchange-alt"></i> Toggle Compact View';
+                }
+            });
+            
+            // Function to get user's actual IP
+            async function getClientIP() {
+                try {
+                    const response = await fetch('https://api.ipify.org?format=json');
+                    const data = await response.json();
+                    return data.ip;
+                } catch (error) {
+                    console.error('Error fetching IP:', error);
+                    return null;
+                }
+            }
+            
+            // Function to get location data from IP
+            async function getIPInfo(ip) {
+                try {
+                    // Using ipapi.co API for accurate location data
+                    const response = await fetch(`https://ipapi.co/${ip}/json/`);
+                    const data = await response.json();
+                    return data;
+                } catch (error) {
+                    console.error('Error fetching IP info:', error);
+                    return null;
+                }
+            }
+            
+            async function fetchIPInfo() {
+                let ip = ipInput.value.trim();
+                
+                // If no IP provided, get user's own IP
                 if (!ip) {
-                    showError('Please enter an IP address');
+                    ip = await getClientIP();
+                    if (!ip) {
+                        showError('Could not detect your IP address');
+                        return;
+                    }
+                    ipInput.value = ip;
+                }
+                
+                // Validate IP format
+                if (!isValidIP(ip)) {
+                    showError('Please enter a valid IP address');
                     return;
                 }
                 
@@ -404,87 +515,102 @@
                 resultsSection.style.display = 'none';
                 errorMessage.style.display = 'none';
                 
-                // Simulate API call with timeout (since we can't make actual API calls from this environment)
-                setTimeout(() => {
-                    // For demonstration purposes, we'll use mock data
-                    const mockData = {
-                        status: 'success',
-                        country: 'United States',
-                        countryCode: 'US',
-                        region: 'CA',
-                        regionName: 'California',
-                        city: 'Mountain View',
-                        zip: '94043',
-                        lat: 37.4056,
-                        lon: -122.0775,
-                        timezone: 'America/Los_Angeles',
-                        isp: 'Google LLC',
-                        org: 'Google LLC',
-                        as: 'AS15169 Google LLC',
-                        query: ip,
-                        reverse: 'dns.google',
-                        mobile: false,
-                        proxy: false,
-                        hosting: true
-                    };
+                try {
+                    const ipData = await getIPInfo(ip);
                     
-                    displayIPInfo(mockData);
-                }, 2000);
+                    if (!ipData || ipData.error) {
+                        showError('Invalid IP address or API error');
+                        return;
+                    }
+                    
+                    displayIPInfo(ipData);
+                } catch (error) {
+                    console.error('Error:', error);
+                    showError('Network error. Please try again.');
+                }
+            }
+            
+            function isValidIP(ip) {
+                // Simple IP validation
+                const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+                if (!ipRegex.test(ip)) return false;
+                
+                // Check each octet
+                const parts = ip.split('.');
+                return parts.every(part => {
+                    const num = parseInt(part);
+                    return num >= 0 && num <= 255;
+                });
             }
             
             function displayIPInfo(data) {
                 // Hide loader
                 loader.style.display = 'none';
                 
-                if (data.status !== 'success') {
-                    showError('Invalid IP address or API error');
-                    return;
-                }
-                
                 // Clear previous results
                 infoGrid.innerHTML = '';
                 extraInfo.innerHTML = '';
                 
-                // Add info cards
+                // Add info cards for all requested fields
                 const fields = [
-                    {label: 'IP Address', value: data.query, icon: 'fa-network-wired'},
-                    {label: 'Country', value: data.country, icon: 'fa-globe'},
-                    {label: 'Region', value: `${data.regionName} (${data.region})`, icon: 'fa-map'},
-                    {label: 'City', value: data.city, icon: 'fa-city'},
-                    {label: 'ZIP Code', value: data.zip, icon: 'fa-mail-bulk'},
-                    {label: 'Coordinates', value: `${data.lat}, ${data.lon}`, icon: 'fa-location-dot'},
-                    {label: 'Timezone', value: data.timezone, icon: 'fa-clock'},
-                    {label: 'ISP', value: data.isp, icon: 'fa-wifi'},
-                    {label: 'Organization', value: data.org, icon: 'fa-building'},
-                    {label: 'AS Number', value: data.as, icon: 'fa-server'},
-                    {label: 'Mobile', value: data.mobile ? 'Yes' : 'No', icon: 'fa-mobile'},
-                    {label: 'Proxy', value: data.proxy ? 'Yes' : 'No', icon: 'fa-shield'},
-                    {label: 'Hosting', value: data.hosting ? 'Yes' : 'No', icon: 'fa-database'}
+                    {label: 'Status', value: data.ip ? 'success' : 'fail', icon: 'fa-check-circle', type: 'status'},
+                    {label: 'Continent', value: data.continent_code ? getContinentName(data.continent_code) : 'N/A', icon: 'fa-globe-americas'},
+                    {label: 'Continent Code', value: data.continent_code || 'N/A', icon: 'fa-globe-americas'},
+                    {label: 'Country', value: data.country_name || 'N/A', icon: 'fa-flag', important: true},
+                    {label: 'Country Code', value: data.country_code || 'N/A', icon: 'fa-flag'},
+                    {label: 'Region', value: data.region_code || 'N/A', icon: 'fa-map-marked-alt'},
+                    {label: 'Region Name', value: data.region || 'N/A', icon: 'fa-map-marked-alt', important: true},
+                    {label: 'City', value: data.city || 'N/A', icon: 'fa-city', important: true},
+                    {label: 'District', value: data.district || 'N/A', icon: 'fa-map-marker-alt'},
+                    {label: 'ZIP Code', value: data.postal || 'N/A', icon: 'fa-mail-bulk'},
+                    {label: 'Latitude', value: data.latitude || 'N/A', icon: 'fa-location-arrow'},
+                    {label: 'Longitude', value: data.longitude || 'N/A', icon: 'fa-location-arrow'},
+                    {label: 'Timezone', value: data.timezone || 'N/A', icon: 'fa-clock', important: true},
+                    {label: 'Offset', value: data.utc_offset || 'N/A', icon: 'fa-clock'},
+                    {label: 'Currency', value: data.currency || 'N/A', icon: 'fa-money-bill-wave'},
+                    {label: 'ISP', value: data.org || 'N/A', icon: 'fa-wifi', important: true},
+                    {label: 'Organization', value: data.org || 'N/A', icon: 'fa-building'},
+                    {label: 'AS Number', value: data.asn || 'N/A', icon: 'fa-server'},
+                    {label: 'AS Name', value: data.asn ? `AS${data.asn}` : 'N/A', icon: 'fa-network-wired'},
+                    {label: 'Reverse DNS', value: data.reverse || 'N/A', icon: 'fa-exchange-alt'},
+                    {label: 'Mobile', value: data.mobile ? 'Yes' : 'No', icon: 'fa-mobile-alt'},
+                    {label: 'Proxy', value: data.proxy ? 'Yes' : 'No', icon: 'fa-user-shield'},
+                    {label: 'Hosting', value: data.hosting ? 'Yes' : 'No', icon: 'fa-database'},
+                    {label: 'Query IP', value: data.ip || 'N/A', icon: 'fa-network-wired', important: true}
                 ];
                 
                 fields.forEach(field => {
                     if (field.value) {
                         const card = document.createElement('div');
                         card.className = 'info-card';
+                        if (field.important) {
+                            card.classList.add('important-field');
+                        }
+                        
+                        let valueElement = '';
+                        if (field.type === 'status') {
+                            valueElement = `<div class="info-value ${field.value === 'success' ? 'status-success' : 'status-fail'}">${field.value}</div>`;
+                        } else {
+                            valueElement = `<div class="info-value">${field.value}</div>`;
+                        }
+                        
                         card.innerHTML = `
                             <div class="info-label"><i class="fas ${field.icon}"></i> ${field.label}</div>
-                            <div class="info-value">${field.value}</div>
+                            ${valueElement}
                         `;
                         infoGrid.appendChild(card);
                     }
                 });
                 
                 // Add extra info if available
-                if (data.reverse || (data.lat && data.lon)) {
+                if (data.latitude && data.longitude) {
                     let extraHTML = '<div class="info-card" style="grid-column: 1 / -1;">';
                     extraHTML += '<div class="results-title" style="font-size: 1.5rem; margin-bottom: 15px;">Extra Network Information</div>';
                     
-                    if (data.reverse) {
-                        extraHTML += `<p><strong>Reverse DNS:</strong> ${data.reverse}</p>`;
-                    }
+                    extraHTML += `<p class="info-value"><i class="fas fa-map-marked-alt"></i> <strong>Maps Link:</strong> <a href="https://maps.google.com/?q=${data.latitude},${data.longitude}" target="_blank" style="color: #00f7ff; text-decoration: none;">View on Google Maps</a></p>`;
                     
-                    if (data.lat && data.lon) {
-                        extraHTML += `<p><strong>Maps Link:</strong> <a href="https://maps.google.com/?q=${data.lat},${data.lon}" target="_blank" style="color: #00f7ff;">View on Google Maps</a></p>`;
+                    if (data.country_code) {
+                        extraHTML += `<p class="info-value"><i class="fas fa-phone"></i> <strong>Calling Code:</strong> +${data.country_calling_code || 'N/A'}</p>`;
                     }
                     
                     extraHTML += '</div>';
@@ -497,8 +623,21 @@
                 // Add glowing animation to results
                 const infoCards = document.querySelectorAll('.info-card');
                 infoCards.forEach((card, index) => {
-                    card.style.animationDelay = `${index * 0.1}s`;
+                    card.style.animationDelay = `${index * 0.05}s`;
                 });
+            }
+            
+            function getContinentName(code) {
+                const continents = {
+                    'AF': 'Africa',
+                    'AN': 'Antarctica',
+                    'AS': 'Asia',
+                    'EU': 'Europe',
+                    'NA': 'North America',
+                    'OC': 'Oceania',
+                    'SA': 'South America'
+                };
+                return continents[code] || code;
             }
             
             function showError(message) {
